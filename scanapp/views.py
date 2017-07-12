@@ -51,6 +51,20 @@ from scanapp.tasks import create_scan_id
 from scanapp.tasks import handle_special_urls
 from scanapp.tasks import scan_code_async
 
+from django.views.decorators.csrf import csrf_exempt
+from . import models
+from rest_framework.authtoken.models import Token
+from django.http import HttpResponse
+import json
+from django.db import transaction
+from django.contrib.auth.models import User
+from django.views import View
+from scanapp.forms import *
+from django.template import RequestContext
+from django.shortcuts import render_to_response
+from django.views.decorators.csrf import csrf_protect
+from django.utils.decorators import method_decorator
+
 
 class LocalUploadView(FormView):
     """
@@ -104,30 +118,39 @@ class ScanResults(TemplateView):
         })
 
 
+
 class LoginView(TemplateView):
     template_name = "scanapp/login.html"
 
 
-class RegisterView(View):
+class RegisterView(FormView):
     def post(self, request):
-        if request.POST.get('password') != request.POST.get('confirm-password'):
-            return HttpResponse("Unauthorized- Password doesn't match", status=401)
+        if request.method == 'POST':
+            form = RegistrationForm(request.POST)
+            if form.is_valid():
+                user = User.objects.create_user(
+                    username=form.cleaned_data['username'],
+                    password=form.cleaned_data['password1'],
+                    email=form.cleaned_data['email']
+                )
+                return HttpResponse(
+                    json.dumps(
+                        {
+                            'token': Token.objects.get(user=user).key
+                        }
+                    )
+                )
 
-        with transaction.atomic():
-            user = User.objects.create_user(
-                username=request.POST.get('username'),
-                password=request.POST.get('password'),
-                email=request.POST.get('email')
-            )
+        else:
+            form = RegistrationForm()
 
-            user.save()
+        variables = RequestContext(request, {
+            'form': form
+        })
 
-        return HttpResponse(
-            json.dumps(
-                {
-                    'token': Token.objects.get(user=user).key
-                }
-            )
+        return render_to_response(
+            'scanapp/login.html',
+            context={'form': form}
         )
 
 

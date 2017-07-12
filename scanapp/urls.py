@@ -28,7 +28,7 @@ from django.views.generic import TemplateView, RedirectView
 from scanapp.views import LocalUploadView
 from scanapp.views import ScanResults
 from scanapp.views import UrlScanView
-from scanapp.views import RegisterView
+# from scanapp.views import RegisterView
 from scanapp.views import LoginView
 from scanapp.views import ScanApiView
 
@@ -40,9 +40,8 @@ urlpatterns = [
     url(r'^localscan/', LocalUploadView.as_view(), name='localuploadview'),
     url(r'^urlscan/', UrlScanView.as_view(), name='urlscanview'),
     url(r'^resultscan/(?P<pk>[0-9]+)', ScanResults.as_view(), name='resultview'),
-    url(r'^login/', LoginView.as_view(), name='login'),
+    url(r'^login/', csrf_exempt(RegisterView.as_view()), name='login'),
     url(r'^signin/', rest_views.obtain_auth_token, name='signin'),
-    url(r'^signup/?', RegisterView.as_view(), name='signup'),
     url(r'^home/', TemplateView.as_view(template_name='scanapp/home.html'), name='home'),
     url(r'^resultserializer/(?P<pk>[0-9]+)', ScanApiView.as_view(), name='resultserializer'),
     url(r'^$', RedirectView.as_view(url='home/')),
