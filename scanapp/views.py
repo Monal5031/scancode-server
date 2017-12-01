@@ -118,7 +118,6 @@ class ScanResults(TemplateView):
         })
 
 
-
 class LoginView(TemplateView):
     template_name = "scanapp/login.html"
 
